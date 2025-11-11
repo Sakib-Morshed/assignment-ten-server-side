@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -34,7 +34,12 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-
+    app.get("/allHabits/:id", async (req, res) => {
+      const { id } = req.params;
+      const objectId = new ObjectId(id);
+      const result = await modelCollection.findOne({ _id: objectId });
+      res.send(result);
+    });
     app.post("/allHabits", async (req, res) => {
       const data = req.body;
       console.log(data);
