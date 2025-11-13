@@ -30,10 +30,35 @@ async function run() {
     const modelCollection = db.collection("allHabits");
 
     app.get("/allHabits", async (req, res) => {
-      const result = await modelCollection.find().toArray();
-      console.log(result);
+      try {
+        const result = await modelCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log("Error fetching all habits:", error);
+      }
+    });
+
+    app.get("/latestHabits", async (req, res) => {
+      const cursor = modelCollection.find().sort({ createdAt: -1 }).limit(6);
+      const result = await cursor.toArray();
       res.send(result);
     });
+
+    app.get("/myHabits", async (req, res) => {
+      try {
+        const email = req.query.email;
+        if (!email) {
+          return res.status(400).send({ message: "Email is required" });
+        }
+
+        const query = { userEmail: email };
+        const result = await modelCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log("Error fetching user habits:", error);
+      }
+    });
+
     app.get("/allHabits/:id", async (req, res) => {
       const { id } = req.params;
       const objectId = new ObjectId(id);
@@ -43,7 +68,39 @@ async function run() {
     app.post("/allHabits", async (req, res) => {
       const data = req.body;
       console.log(data);
-      const result = await modelCollection.insertOne(data);
+      const newHabit = {
+        ...data,
+        createdAt: new Date(),
+      };
+      const result = await modelCollection.insertOne(newHabit);
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+    app.put("/allHabits/:id", async (req, res) => {
+      const { id } = req.params;
+      const data = req.body;
+      // console.log(id, data);
+      const objectId = new ObjectId(id);
+      const filter = { _id: objectId };
+      const update = {
+        $set: data,
+      };
+
+      const result = await modelCollection.updateOne(filter, update);
+
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+    app.delete("/allHabits/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await modelCollection.deleteOne({ _id: new ObjectId(id) });
+
       res.send({
         success: true,
         result,
